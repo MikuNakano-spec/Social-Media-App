@@ -1,0 +1,220 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "~stream-chat-react/dist/css/v2/index.css";
+@import "@stream-io/video-react-sdk/dist/css/styles.css";
+
+@layer base {
+  :root {
+    --background: 224, 5%, 95%;
+    --foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --primary: 198.4,93.2%,59.6%;
+    --primary-foreground: 355.7 100% 97.3%;
+
+    --secondary: 240, 4.8%, 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --muted: 240, 4.8%, 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    --accent: 240, 4.8%, 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 142.1 76.2% 36.3%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 20 14.3% 4.1%;
+    --foreground: 0 0% 95%;
+
+    --card: 24 9.8% 10%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 198.4,93.2%,59.6%;
+    --primary-foreground: 355.7 100% 97.3%;
+
+    --secondary: 240, 3.7%, 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 12, 6.5%, 15.1%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 85.7% 97.3%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 142.4 71.8% 29.2%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.str-chat {
+  --str-chat__font-family: inherit;
+  --str-chat__primary-color: theme(colors.primary.DEFAULT);
+  --str-chat__on-primary-color: theme(colors.primary.foreground);
+  --str-chat__active-primary-color: theme(colors.primary.foreground);
+  --str-chat__primary-color-low-emphasis: color-mix(
+    in hsl,
+    hsl(var(--primary)) 10%,
+    transparent
+  );
+  --str-chat__background-color: theme(colors.card.DEFAULT);
+  --str-chat__secondary-background-color: theme(colors.card.DEFAULT);
+  --str-chat__message-textarea-background-color: theme(colors.background);
+  --str-chat__channel-preview-active-background-color: theme(
+    colors.accent.DEFAULT
+  );
+  --str-chat__channel-preview-hover-background-color: var(
+    --str-chat__channel-preview-active-background-color
+  );
+  --str-chat__secondary-surface-color: theme(colors.muted.DEFAULT);
+  --str-chat__own-message-bubble-color: theme(colors.primary.foreground);
+  --str-chat__primary-surface-color: theme(colors.primary.DEFAULT);
+  --str-chat__primary-surface-color-low-emphasis: var(
+    --str-chat__primary-color-low-emphasis
+  );
+  --str-chat__disabled-color: theme(colors.muted.DEFAULT);
+  --str-chat__cta-button-border-radius: var(--radius);
+}
+
+.str-chat-channel-list {
+  border-right: none;
+}
+
+.str-chat__channel-list-react .str-chat__channel-list-messenger-react {
+  padding-bottom: 0;
+}
+
+.str-chat__channel-search-bar-button--exit-search {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.75; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+.animate-pulse {
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Stream video */
+
+/* Add to video section */
+.str-video__call {
+  @apply w-full h-full;
+}
+
+.str-video__participant-view {
+  @apply !aspect-video;
+}
+
+.str-video__participant-view video {
+  @apply !rounded-lg !object-cover;
+}
+
+@media (max-width: 640px) {
+  .str-video__call {
+    grid-template-columns: repeat(1, 1fr) !important;
+  }
+}
+
+.str-video__call-controls__button[title="Leave call"] {
+  display: none !important;
+}
+
+.str-video__call-controls {
+  gap: 0.5rem !important;
+}
+
+video {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+/* --------------- */
+
+/* Chibi animation */
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(8deg); }
+  75% { transform: rotate(-8deg); }
+}
+
+@keyframes glow {
+  0% { filter: drop-shadow(0 0 5px theme(colors.purple.500)); }
+  50% { filter: drop-shadow(0 0 20px theme(colors.purple.500)); }
+  100% { filter: drop-shadow(0 0 5px theme(colors.purple.500)); }
+}
+
+.animate-glow {
+  animation: glow 2s infinite;
+}
+
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grabbing {
+  cursor: grabbing;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.6s ease-in-out infinite;
+}
+
+.hover\:drop-shadow-glow:hover {
+  filter: drop-shadow(0 0 10px theme(colors.purple.500));
+}
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(6px);
+}
+/* Chibi animation */
