@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
 import kyInstance from "@/lib/ky";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { 
-  generateReportsExcelReport, 
+import {
+  generateReportsExcelReport,
   generateReportsPdfReport,
-  ReportExportData 
+  ReportExportData,
 } from "@/components/export/generateReportReports";
 import { FiDownload } from "react-icons/fi";
 import {
@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FaRobot } from "react-icons/fa";
 
 interface Report {
   id: string;
@@ -43,6 +44,9 @@ export default function AdminReports() {
   const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState<"excel" | "pdf" | null>(null);
   const limit = 3;
+  const [aiStatus, setAiStatus] = useState<Record<string, string>>({});
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
 
   const { data, isLoading, error } = useQuery<ReportData>({
     queryKey: ["reports", statusFilter, currentPage],
@@ -53,9 +57,7 @@ export default function AdminReports() {
       params.append("limit", limit.toString());
       params.append("includeContent", "true");
 
-      return kyInstance
-        .get(`/api/admin/reports?${params.toString()}`)
-        .json();
+      return kyInstance.get(`/api/admin/reports?${params.toString()}`).json();
     },
   });
 
@@ -76,21 +78,23 @@ export default function AdminReports() {
     try {
       setIsExporting(type);
       const response = await kyInstance.get(
-        `/api/admin/reports?status=${statusFilter}&export=true`
+        `/api/admin/reports?status=${statusFilter}&export=true`,
       );
       const data: ReportData = await response.json<ReportData>();
-      
-      const exportData: ReportExportData[] = data.reports.map((report: Report) => ({
-        id: report.id,
-        reportType: report.postId ? "Post" : "Comment",
-        reportedItemId: report.postId || report.commentId || "N/A",
-        content: report.postId 
-          ? report.postContent || "No content available" 
-          : report.commentContent || "No content available",
-        username: report.user.username,
-        status: report.status,
-        createdAt: report.createdAt
-      }));
+
+      const exportData: ReportExportData[] = data.reports.map(
+        (report: Report) => ({
+          id: report.id,
+          reportType: report.postId ? "Post" : "Comment",
+          reportedItemId: report.postId || report.commentId || "N/A",
+          content: report.postId
+            ? report.postContent || "No content available"
+            : report.commentContent || "No content available",
+          username: report.user.username,
+          status: report.status,
+          createdAt: report.createdAt,
+        }),
+      );
 
       if (type === "excel") {
         generateReportsExcelReport(exportData);
@@ -108,16 +112,82 @@ export default function AdminReports() {
   const totalReports = data?.total ?? 0;
   const totalPages = Math.ceil(totalReports / limit);
 
+  const aiReviewMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await kyInstance.post("/api/admin/reports/ai-review", {
+        json: { id },
+      });
+      return response.json<{ status: string; reason: string }>();
+    },
+    onSuccess: (data, id) => {
+      setAiStatus((prev) => ({ ...prev, [id]: data.reason }));
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+    onError: (error, id) => {
+      setAiStatus((prev) => ({
+        ...prev,
+        [id]: "Error analyzing content. Check Ollama server",
+      }));
+    },
+  });
+
+  const bulkReviewMutation = useMutation({
+    mutationFn: async (reportIds: string[]) => {
+      setBulkProcessing(true);
+      setBulkProgress(0);
+
+      const results: Record<string, string> = {};
+      for (let i = 0; i < reportIds.length; i++) {
+        try {
+          const id = reportIds[i];
+          const response = await kyInstance.post(
+            "/api/admin/reports/ai-review",
+            { json: { id } },
+          );
+          const data = await response.json<{
+            status: string;
+            reason: string;
+          }>();
+          results[id] = data.reason;
+        } catch (error) {
+          results[reportIds[i]] = "Error analyzing content";
+        } finally {
+          setBulkProgress(Math.round(((i + 1) / reportIds.length) * 100));
+        }
+      }
+      return results;
+    },
+    onSuccess: (results) => {
+      setAiStatus((prev) => ({ ...prev, ...results }));
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+    onSettled: () => {
+      setBulkProcessing(false);
+      setBulkProgress(0);
+    },
+  });
+
+  // Function to handle bulk review
+  const handleBulkReview = () => {
+    const unresolvedIds = reports
+      .filter((report) => report.status === "PENDING")
+      .map((report) => report.id);
+
+    if (unresolvedIds.length > 0) {
+      bulkReviewMutation.mutate(unresolvedIds);
+    }
+  };
+
   if (isLoading) return <p>Loading reports...</p>;
   if (error) return <p className="text-red-500">Failed to load reports</p>;
 
   return (
-    <div className=" bg-white p-6 shadow-md">
-      <div className="mb-3 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+    <div className="bg-white p-6 shadow-md">
+      <div className="mb-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-bold"></h2>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex w-full gap-2 sm:w-auto">
           <select
-            className="border rounded-md p-2 text-sm"
+            className="rounded-md border p-2 text-sm"
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setCurrentPage(1);
@@ -129,6 +199,25 @@ export default function AdminReports() {
             <option value="REVIEWED">Reviewed</option>
             <option value="RESOLVED">Resolved</option>
           </select>
+          <Button
+            variant="secondary"
+            className="flex items-center gap-1"
+            onClick={handleBulkReview}
+            disabled={
+              bulkProcessing ||
+              reports.filter((r) => r.status === "PENDING").length === 0
+            }
+          >
+            <FaRobot />
+            {bulkProcessing ? (
+              <span className="flex items-center gap-2">
+                Processing... {bulkProgress}%
+              </span>
+            ) : (
+              `Review All (${reports.filter((r) => r.status === "PENDING").length})`
+            )}
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" disabled={isExporting !== null}>
@@ -155,6 +244,16 @@ export default function AdminReports() {
           </DropdownMenu>
         </div>
       </div>
+      {bulkProcessing && (
+        <div className="mb-4">
+          <div className="h-2.5 w-full rounded-full bg-gray-200">
+            <div
+              className="h-2.5 rounded-full bg-blue-600"
+              style={{ width: `${bulkProgress}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
 
       <table className="w-full border-collapse">
         <thead>
@@ -177,7 +276,9 @@ export default function AdminReports() {
                       <span className="font-medium">Post #{report.postId}</span>
                     )}
                     {report.commentId && (
-                      <span className="font-medium">Comment #{report.commentId}</span>
+                      <span className="font-medium">
+                        Comment #{report.commentId}
+                      </span>
                     )}
                     <Button
                       variant="link"
@@ -185,19 +286,21 @@ export default function AdminReports() {
                       className="h-auto p-0 text-left"
                       onClick={() => toggleExpandReport(report.id)}
                     >
-                      {expandedReportId === report.id ? 'Hide content' : 'Show content'}
+                      {expandedReportId === report.id
+                        ? "Hide content"
+                        : "Show content"}
                     </Button>
                   </div>
                 </td>
                 <td className="p-2">{report.user.username}</td>
                 <td className="p-2">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs ${
+                    className={`rounded-full px-2 py-1 text-xs ${
                       report.status === "PENDING"
                         ? "bg-yellow-100 text-yellow-800"
                         : report.status === "REVIEWED"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-green-100 text-green-800"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
                     }`}
                   >
                     {report.status}
@@ -205,7 +308,7 @@ export default function AdminReports() {
                 </td>
                 <td className="p-2">
                   <select
-                    className="border rounded-md p-2 text-sm w-full"
+                    className="w-full rounded-md border p-2 text-sm"
                     value={report.status}
                     onChange={(e) =>
                       updateStatusMutation.mutate({
@@ -225,20 +328,24 @@ export default function AdminReports() {
               {expandedReportId === report.id && (
                 <tr className="border-b bg-gray-50">
                   <td colSpan={5} className="p-2">
-                    <div className="bg-white p-4 rounded border">
-                      <div className="flex justify-between items-start mb-2">
+                    <div className="rounded border bg-white p-4">
+                      <div className="mb-2 flex items-start justify-between">
                         <h4 className="font-medium">
-                          {report.commentId ? "Comment Content" : "Post Content"}:
+                          {report.commentId
+                            ? "Comment Content"
+                            : "Post Content"}
+                          :
                         </h4>
                         <span className="text-sm text-gray-500">
-                          Reported on: {new Date(report.createdAt).toLocaleString()}
+                          Reported on:{" "}
+                          {new Date(report.createdAt).toLocaleString()}
                         </span>
                       </div>
-                      <div className="bg-gray-100 p-3 rounded">
+                      <div className="rounded bg-gray-100 p-3">
                         {report.postId && (
                           <>
                             <h4 className="font-medium">Post Content:</h4>
-                            <p className="text-sm whitespace-pre-wrap break-words">
+                            <p className="whitespace-pre-wrap break-words text-sm">
                               {report.postContent || "No content available"}
                             </p>
                           </>
@@ -246,12 +353,27 @@ export default function AdminReports() {
                         {report.commentId && (
                           <>
                             <h4 className="font-medium">Comment Content:</h4>
-                            <p className="text-sm whitespace-pre-wrap break-words">
+                            <p className="whitespace-pre-wrap break-words text-sm">
                               {report.commentContent || "No content available"}
                             </p>
                           </>
                         )}
                       </div>
+                      {aiStatus[report.id] && (
+                        <div
+                          className={`mt-3 rounded-md p-2 ${
+                            aiStatus[report.id].startsWith("VIOLATION")
+                              ? "border border-red-200 bg-red-100 text-red-800"
+                              : "border border-green-200 bg-green-100 text-green-800"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 font-medium">
+                            <FaRobot />
+                            <span>AI Analysis:</span>
+                          </div>
+                          <p className="mt-1 text-sm">{aiStatus[report.id]}</p>
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -262,30 +384,32 @@ export default function AdminReports() {
       </table>
 
       <div className="mt-3 flex items-center justify-center gap-3">
-          <Button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            variant="outline"
-            size="sm"
-            className="h-7 gap-1.5 px-2.5"
-          >
-            <ChevronLeft className="h-3 w-3" />
-            <span className="sr-only sm:not-sr-only">Prev</span>
-          </Button>
-          <span className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages || reports.length < limit}
-            variant="outline"
-            size="sm"
-            className="h-7 gap-1.5 px-2.5"
-          >
-            <span className="sr-only sm:not-sr-only">Next</span>
-            <ChevronRight className="h-3 w-3" />
-          </Button>
-        </div>
+        <Button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          variant="outline"
+          size="sm"
+          className="h-7 gap-1.5 px-2.5"
+        >
+          <ChevronLeft className="h-3 w-3" />
+          <span className="sr-only sm:not-sr-only">Prev</span>
+        </Button>
+        <span className="text-sm text-gray-600">
+          Page {currentPage} of {totalPages}
+        </span>
+        <Button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          disabled={currentPage === totalPages || reports.length < limit}
+          variant="outline"
+          size="sm"
+          className="h-7 gap-1.5 px-2.5"
+        >
+          <span className="sr-only sm:not-sr-only">Next</span>
+          <ChevronRight className="h-3 w-3" />
+        </Button>
+      </div>
     </div>
   );
 }

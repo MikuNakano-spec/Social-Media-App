@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useState } from "react";
 import NewChatDialog from "./NewChatDialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { useI18n } from "@/lib/i18n";
 
 interface ChatSidebarProps {
   open: boolean;
@@ -79,6 +80,9 @@ interface MenuHeaderProps {
 
 function MenuHeader({ onClose }: MenuHeaderProps) {
   const [showNewChatDialog, setshowNewChatDialog] = useState(false);
+  const { t, mounted } = useI18n();
+  
+  if (!mounted) return null;
 
   return (
     <>
@@ -88,7 +92,7 @@ function MenuHeader({ onClose }: MenuHeaderProps) {
             <X className="size-5" />
           </Button>
         </div>
-        <h1 className="me-auto text-xl font-bold md:ms-2">Messages</h1>
+        <h1 className="me-auto text-xl font-bold md:ms-2">{t.messages}</h1>
         <Button size="icon" variant="ghost" title="start new chat"
         onClick={() => setshowNewChatDialog(true)}
         >

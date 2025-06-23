@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const { user } = await validateRequest();
 
   if (!user) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/failure`);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/users/subscribe/failure`);
   }
 
   const url = new URL(req.url);

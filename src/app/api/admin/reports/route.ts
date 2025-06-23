@@ -23,7 +23,6 @@ export async function GET(req: Request) {
     const shouldExport = searchParams.get("export") === "true";
     const skip = (page - 1) * limit;
 
-    // For exports, get all data without pagination
     if (shouldExport) {
       const reports = await prisma.report.findMany({
         where: status ? { status } : undefined,
@@ -80,7 +79,6 @@ export async function GET(req: Request) {
       });
     }
 
-    // Regular paginated query
     const reports = await prisma.report.findMany({
       where: status ? { status } : undefined,
       select: {

@@ -11,6 +11,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../ui/button";
+import { useI18n } from "@/lib/i18n";
 
 export function Stories() {
   const { user } = useSession();
@@ -19,6 +20,8 @@ export function Stories() {
   const [progress, setProgress] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+
+  const { t } = useI18n();
 
   const {
     data: stories = [],
@@ -127,7 +130,7 @@ export function Stories() {
         ))}
         {!isLoading && stories.length === 0 && user && (
           <div className="flex items-center px-4 italic text-gray-500">
-            No stories available. Create your first story!
+            {t.stories}
           </div>
         )}
       </div>

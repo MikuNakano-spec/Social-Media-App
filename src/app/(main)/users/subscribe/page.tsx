@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/lib/i18n";
 
 const plans = [
   {
@@ -98,18 +99,22 @@ export default function SubscribePage() {
     router.push(`/users/subscribe/checkout?plan=${planId}`);
   };
 
+  const { t, mounted } = useI18n();
+
+  if (!mounted) return null;
+
   return (
     <div className="min-h-screen bg-white p-8 text-gray-900 dark:bg-gradient-to-tr dark:from-gray-900 dark:to-black dark:text-white">
       <h1 className="mb-4 text-center text-3xl font-bold">
-        Upgrade to Premium
+        {t.premiums}
       </h1>
       <p className="mb-8 text-center text-gray-600 dark:text-gray-300">
-        Enjoy exclusive tools, better reach, and enhanced visibility.
+        {t.premiumsexplain}
       </p>
 
       {isPremium === true && (
         <p className="mb-6 text-center font-semibold text-green-600">
-          You already have a premium subscription.
+          {t.alrsubtip}
         </p>
       )}
 
@@ -165,10 +170,10 @@ export default function SubscribePage() {
               } ${isPremium ? "cursor-not-allowed opacity-50" : ""}`}
             >
               {isPremium
-                ? "Already Subscribed"
+                ? t.alrsub
                 : loading && selectedPlan === plan.id
                   ? "Processing..."
-                  : "Subscribe"}
+                  : t.subcribe}
             </button>
           </div>
         ))}

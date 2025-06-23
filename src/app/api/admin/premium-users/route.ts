@@ -33,7 +33,6 @@ export async function GET(req: Request) {
         : undefined,
     };
 
-    // For exports, get all data without pagination
     if (shouldExport) {
       const users = await prisma.user.findMany({
         where,
@@ -58,7 +57,6 @@ export async function GET(req: Request) {
       });
     }
 
-    // Regular paginated query
     const pageNum = parseInt(page || "1", 10) || 1;
     const limitNum = parseInt(limit || "10", 10) || 10;
     const skip = (pageNum - 1) * limitNum;

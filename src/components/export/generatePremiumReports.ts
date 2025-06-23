@@ -47,13 +47,11 @@ export function generatePremiumPdfReport(users: PremiumUserExportData[]) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 14;
   
-  // Header
   doc.setFontSize(16);
   doc.setTextColor(33, 37, 41);
   doc.setFont("helvetica", "bold");
   doc.text("Premium Users Report", margin, 20);
   
-  // Metadata
   doc.setFontSize(10);
   doc.setTextColor(100);
   doc.setFont("helvetica", "normal");
@@ -64,7 +62,6 @@ export function generatePremiumPdfReport(users: PremiumUserExportData[]) {
   doc.setLineWidth(0.5);
   doc.line(margin, 35, pageWidth - margin, 35);
   
-  // Table data
   const tableData = users.map(user => [
     user.username,
     user.email || "—",
@@ -101,7 +98,6 @@ export function generatePremiumPdfReport(users: PremiumUserExportData[]) {
       5: { cellWidth: 25 }
     },
     didDrawPage: function (data) {
-      // Footer
       const pageCount = doc.getNumberOfPages();
       doc.setFontSize(8);
       doc.setTextColor(100);

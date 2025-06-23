@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { Heart } from "lucide-react";
 import { useToast } from "../ui/use-toast";
+import { useI18n } from "@/lib/i18n";
 
 interface LikeButtonProps {
   postId: string;
@@ -17,6 +18,8 @@ interface LikeButtonProps {
 
 export default function LikeButton({ postId, initialState }: LikeButtonProps) {
   const { toast } = useToast();
+
+  const { t } = useI18n();
 
   const queryClient = useQueryClient();
 
@@ -67,7 +70,7 @@ export default function LikeButton({ postId, initialState }: LikeButtonProps) {
         )}
       />
       <span className="text-sm font-medium tabular-nums">
-        {data.likes} <span className="hidden sm:inline">likes</span>
+        {data.likes} <span className="hidden sm:inline">{t.likes}</span>
       </span>
     </button>
   );

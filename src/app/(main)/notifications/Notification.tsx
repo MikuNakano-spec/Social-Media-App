@@ -30,10 +30,15 @@ export default function Notification({ notification }: NotificationProps) {
       href: `/posts/${notification.postId}`,
     },
     VIDEO_CALL: {
-    message: `${notification.issuer.displayName} started a video call`,
-    icon: <Video className="size-7 text-blue-500" />,
-    href: `/videocall/`,
-  },
+      message: `${notification.issuer.displayName} started a video call`,
+      icon: <Video className="size-7 text-blue-500" />,
+      href: `/videocall/`,
+    },
+    POST_CREATE: {
+      message: `${notification.issuer.displayName} posted a new update`,
+      icon: <MessageCircle className="size-7 text-green-500" />,
+      href: `/posts/${notification.postId}`,
+    },
   };
 
   const { message, icon, href } = notificationTypeMap[notification.type];

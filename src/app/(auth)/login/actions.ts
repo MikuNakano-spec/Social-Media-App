@@ -1,18 +1,38 @@
 "use server";
 
 import { lucia } from "@/auth";
+import { checkMemoryRateLimit } from "@/lib/memoryRateLimiter";
 import prisma from "@/lib/prisma";
 import { loginSchema, LoginValues } from "@/lib/validation";
 import { verify } from "@node-rs/argon2";
 import { isRedirectError } from "next/dist/client/components/redirect";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export async function login(
   credentials: LoginValues,
-): Promise<{ error: string }> {
+): Promise<{ error: string; rateLimit?: { remaining: number; reset: number } }> {
   try {
     const { username, password } = loginSchema.parse(credentials);
+
+    const ip = headers().get("x-forwarded-for") || "unknown";
+    const rateLimitKey = `login:${ip}`;
+
+    const rateLimit = checkMemoryRateLimit(
+      rateLimitKey,
+      15 * 60 * 1000, 
+      5 
+    );
+
+    if (!rateLimit.isAllowed) {
+      return {
+        error: "Too many login attempts. Please try again later.",
+        rateLimit: {
+          remaining: rateLimit.remaining,
+          reset: rateLimit.reset
+        }
+      };
+    }
 
     const existingUser = await prisma.user.findFirst({
       where: {

@@ -6,6 +6,7 @@ import { MessageCountInfo } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { Mail } from "lucide-react";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 interface MessagesButtonProps {
   initialState: MessageCountInfo;
@@ -19,6 +20,10 @@ export default function MessagesButton({ initialState }: MessagesButtonProps) {
     initialData: initialState,
     refetchInterval: 35 * 1000,
   });
+
+  const { t, mounted } = useI18n();
+
+  if (!mounted) return null;
 
   return (
     <Button
@@ -36,7 +41,7 @@ export default function MessagesButton({ initialState }: MessagesButtonProps) {
             </span>
           )}
         </div>
-        <span className="hidden lg:inline">Messages</span>
+        <span className="hidden lg:inline">{t.messages}</span>
       </Link>
     </Button>
   );

@@ -47,13 +47,11 @@ export function generatePostsPdfReport(posts: PostExportData[]) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 14;
   
-  // Header
   doc.setFontSize(16);
   doc.setTextColor(33, 37, 41);
   doc.setFont("helvetica", "bold");
   doc.text("SocialApp Posts Report", margin, 20);
   
-  // Metadata
   doc.setFontSize(10);
   doc.setTextColor(100);
   doc.setFont("helvetica", "normal");
@@ -64,7 +62,6 @@ export function generatePostsPdfReport(posts: PostExportData[]) {
   doc.setLineWidth(0.5);
   doc.line(margin, 35, pageWidth - margin, 35);
   
-  // Table data
   const tableData = posts.map(post => [
     post.username,
     post.content.length > 100 ? post.content.substring(0, 100) + "..." : post.content,
@@ -99,7 +96,6 @@ export function generatePostsPdfReport(posts: PostExportData[]) {
       4: { cellWidth: 30 }
     },
     didDrawPage: function (data) {
-      // Footer
       const pageCount = doc.getNumberOfPages();
       doc.setFontSize(8);
       doc.setTextColor(100);

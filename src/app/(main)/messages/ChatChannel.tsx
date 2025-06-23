@@ -9,8 +9,21 @@ import {
   MessageList,
   Window,
   useChannelStateContext,
+  MessageSimple,
 } from "stream-chat-react";
 import { useSession } from "../SessionProvider";
+import ConversationActions from "./ConversationActions";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
+import { useState } from "react";
+import { useChatContext } from "stream-chat-react";
+import { useToast } from "@/components/ui/use-toast";
+import CustomMessageInput from "./CustomMessageInput";
 
 interface ChatChannelProps {
   open: boolean;
@@ -31,8 +44,8 @@ export default function ChatChannel({
             openSidebar={openSidebar}
             startCall={startCall}
           />
-          <MessageList />
-          <MessageInput />
+          <MessageList Message={MessageSimple} />
+          <CustomMessageInput/>
         </Window>
       </Channel>
     </div>
@@ -51,12 +64,18 @@ function CustomChannelHeader({
 }: CustomChannelHeaderProps) {
   const { channel } = useChannelStateContext();
   const { user } = useSession();
+  const [loading, setLoading] = useState(false);
+  const { client } = useChatContext();
+  const { toast } = useToast();
+
+  const members = Object.values(channel?.state?.members || {});
+  const otherUser = members.find((m) => m.user_id !== user?.id)?.user_id;
 
   const handleVideoCall = async () => {
     if (!user || !channel) return;
 
     const members = Object.values(channel.state.members);
-    const otherMember = members.find(m => m.user_id !== user.id);
+    const otherMember = members.find((m) => m.user_id !== user.id);
     if (!otherMember) return;
 
     const sortedIds = [user.id, otherMember.user_id].sort();
@@ -64,16 +83,38 @@ function CustomChannelHeader({
 
     try {
       await channel.sendMessage({
-        text: 'Incoming video call', 
-        type: 'regular',
+        text: "Incoming video call",
+        type: "regular",
         custom: {
-          callAction: 'start',
-          callId
-        }
+          callAction: "start",
+          callId,
+        },
       });
       startCall(callId, true);
     } catch (err) {
-      console.error('Failed to start call:', err);
+      console.error("Failed to start call:", err);
+      toast({
+        variant: "destructive",
+        description: "Failed to start video call.",
+      });
+    }
+  };
+
+  const leaveConversation = async () => {
+    try {
+      setLoading(true);
+      await channel.removeMembers([user.id]);
+      toast({
+        description: "Left the conversation.",
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        description: "Failed to leave conversation.",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,13 +126,21 @@ function CustomChannelHeader({
         </Button>
       </div>
       <ChannelHeader {...props} />
-      <Button
-        size="icon"
-        variant="ghost"
-        onClick={handleVideoCall}
-      >
+      <Button size="icon" variant="ghost" onClick={handleVideoCall}>
         <PhoneCall className="size-5" />
       </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="icon" variant="ghost">
+            <MoreVertical className="size-5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem disabled={loading} onClick={leaveConversation}>
+            Leave Conversation
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

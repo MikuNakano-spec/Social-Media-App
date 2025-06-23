@@ -6,6 +6,7 @@ import Link from "next/link";
 import NotificationsButton from "./NotificationsButton";
 import MessagesButton from "./MessagesButton";
 import streamServerClient from "@/lib/stream";
+import { getServerTranslation } from "@/lib/i18n/getServerTranslation";
 
 interface MenuBarProps {
   className?: string;
@@ -14,6 +15,8 @@ interface MenuBarProps {
 export default async function MenuBar({ className }: MenuBarProps) {
   const { user } = await validateRequest();
   if (!user) return null;
+
+  const t = getServerTranslation();
 
   const [unreadNotificationCount, unreadMessagesCount] = await Promise.all([
     prisma.notification.count({
@@ -35,7 +38,7 @@ export default async function MenuBar({ className }: MenuBarProps) {
       >
         <Link href="/">
           <Home />
-          <span className="hidden lg:inline">Home</span>
+          <span className="hidden lg:inline">{t.home}</span>
         </Link>
       </Button>
 
@@ -52,7 +55,7 @@ export default async function MenuBar({ className }: MenuBarProps) {
       >
         <Link href="/bookmarks">
           <Bookmark />
-          <span className="hidden lg:inline">Bookmarks</span>
+          <span className="hidden lg:inline">{t.bookmarks}</span>
         </Link>
       </Button>
 
@@ -64,7 +67,7 @@ export default async function MenuBar({ className }: MenuBarProps) {
       >
         <Link href="/users/subscribe">
           <DollarSign />
-          <span className="hidden lg:inline">Premium</span>
+          <span className="hidden lg:inline">{t.premium}</span>
         </Link>
       </Button>
       {user.isPremium && (
@@ -76,7 +79,7 @@ export default async function MenuBar({ className }: MenuBarProps) {
         >
           <Link href="/game">
             <Gamepad />
-            <span className="hidden lg:inline">Game</span>
+            <span className="hidden lg:inline">{t.game}</span>
           </Link>
         </Button>
       )}

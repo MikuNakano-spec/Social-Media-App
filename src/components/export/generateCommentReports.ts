@@ -44,13 +44,11 @@ export function generateCommentsPdfReport(comments: CommentExportData[]) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 14;
   
-  // Header
   doc.setFontSize(16);
   doc.setTextColor(33, 37, 41);
   doc.setFont("helvetica", "bold");
   doc.text("SocialApp Comments Report", margin, 20);
   
-  // Metadata
   doc.setFontSize(10);
   doc.setTextColor(100);
   doc.setFont("helvetica", "normal");
@@ -61,7 +59,6 @@ export function generateCommentsPdfReport(comments: CommentExportData[]) {
   doc.setLineWidth(0.5);
   doc.line(margin, 35, pageWidth - margin, 35);
   
-  // Table data
   const tableData = comments.map(comment => [
     comment.username,
     comment.content.length > 100 ? comment.content.substring(0, 100) + "..." : comment.content,
@@ -96,7 +93,6 @@ export function generateCommentsPdfReport(comments: CommentExportData[]) {
       4: { cellWidth: 40, halign: "left" }
     },
     didDrawPage: function (data) {
-      // Footer
       const pageCount = doc.getNumberOfPages();
       doc.setFontSize(8);
       doc.setTextColor(100);

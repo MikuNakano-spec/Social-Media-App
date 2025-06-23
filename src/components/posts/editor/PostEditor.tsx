@@ -11,13 +11,15 @@ import StarterKit from "@tiptap/starter-kit";
 import { useDropzone } from "@uploadthing/react";
 import { ImageIcon, Loader2, X } from "lucide-react";
 import Image from "next/image";
-import { ClipboardEvent, useRef } from "react";
+import { ClipboardEvent, useRef, useState } from "react";
 import { useSubmitPostMutation } from "./mutations";
 import "./styles.css";
 import useMediaUpload, { Attachment } from "./useMediaUpload";
+import { useI18n } from "@/lib/i18n";
 
 export default function PostEditor() {
   const { user } = useSession();
+  const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
 
   const mutation = useSubmitPostMutation();
 
@@ -33,6 +35,8 @@ export default function PostEditor() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: startUpload,
   });
+
+  const { t } = useI18n();
 
   const { onClick, ...rootProps } = getRootProps();
 
@@ -58,11 +62,13 @@ export default function PostEditor() {
       {
         content: input,
         mediaIds: attachments.map((a) => a.mediaId).filter(Boolean) as string[],
+        visibility,
       },
       {
         onSuccess: () => {
           editor?.commands.clearContent();
           resetMediaUploads();
+          setVisibility("PUBLIC");
         },
       },
     );
@@ -109,13 +115,23 @@ export default function PostEditor() {
             onFilesSelected={startUpload}
             disabled={isUploading || attachments.length >= 5}
           />
+          <select
+            value={visibility}
+            onChange={(e) =>
+              setVisibility(e.target.value as "PUBLIC" | "PRIVATE")
+            }
+            className="rounded-md border px-2 py-1 text-sm"
+          >
+            <option value="PUBLIC">{t.public}</option>
+            <option value="PRIVATE">{t.private}</option>
+          </select>
           <LoadingButton
             onClick={onSubmit}
             loading={mutation.isPending}
             disabled={!input.trim() || isUploading}
             className="min-w-20"
           >
-            Post
+            {t.post}
           </LoadingButton>
         </div>
       </div>

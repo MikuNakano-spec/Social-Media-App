@@ -14,6 +14,7 @@ import { cache } from "react";
 import EditProfileButton from "./EditProfileButton";
 import UserPosts from "./UserPosts";
 import PremiumBadge from "@/components/PremiumBadge";
+import { getServerTranslation } from "@/lib/i18n/getServerTranslation";
 
 interface PageProps {
   params: { username: string };
@@ -51,6 +52,7 @@ export async function generateMetadata({
 
 export default async function Page({ params: { username } }: PageProps) {
   const { user: loggedInUser } = await validateRequest();
+  const t = getServerTranslation();
 
   if (!loggedInUser) {
     return (
@@ -68,7 +70,7 @@ export default async function Page({ params: { username } }: PageProps) {
         <UserProfile user={user} loggedInUserId={loggedInUser.id} />
         <div className="rounded-2xl bg-card p-5 shadow-sm">
           <h2 className="text-center text-2xl font-bold">
-            {user.displayName}&apos;s posts
+            {user.displayName}&apos;s {t.posts}
           </h2>
         </div>
         <UserPosts userId={user.id} />

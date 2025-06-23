@@ -23,6 +23,11 @@ export default function LoginForm() {
 
   const [isPending, startTransition] = useTransition();
 
+  const [rateLimit, setRateLimit] = useState<{
+    remaining: number;
+    reset?: number;
+  } | null>(null);
+
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -33,9 +38,11 @@ export default function LoginForm() {
 
   async function onSubmit(values: LoginValues) {
     setError(undefined);
+    setRateLimit(null);
     startTransition(async () => {
-      const { error } = await login(values);
-      if (error) setError(error);
+      const result = await login(values);
+      if (result.error) setError(result.error);
+      if (result.rateLimit) setRateLimit(result.rateLimit);
     });
   }
 
@@ -45,8 +52,18 @@ export default function LoginForm() {
         {error && (
           <Alert variant="destructive">
             <span className="mr-2">⚠️</span>
+            <AlertDescription className="text-center">{error}</AlertDescription>
+          </Alert>
+        )}
+        {rateLimit && (
+          <Alert variant="default">
+            <span className="mr-2">⏱️</span>
             <AlertDescription className="text-center">
-              {error}
+              {rateLimit.remaining > 0
+                ? `Bạn còn ${rateLimit.remaining} lần thử đăng nhập`
+                : rateLimit.reset
+                  ? `Vui lòng thử lại sau ${new Date(rateLimit.reset * 1000).toLocaleTimeString()}`
+                  : "Vui lòng thử lại sau một thời gian"}
             </AlertDescription>
           </Alert>
         )}

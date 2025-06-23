@@ -133,23 +133,23 @@ export default function AdminUsers() {
   });
 
   const handleExportUsers = async (type: "excel" | "pdf") => {
-  try {
-    setIsExporting(type);
-    const data = await kyInstance
-      .get(`/api/admin/users?search=${searchTerm}&export=true`)
-      .json<ExportUsersResponse>();
-    
-    if (type === "excel") {
-      generateUsersExcelReport(data.users);
-    } else {
-      generateUsersPdfReport(data.users);
+    try {
+      setIsExporting(type);
+      const data = await kyInstance
+        .get(`/api/admin/users?search=${searchTerm}&export=true`)
+        .json<ExportUsersResponse>();
+
+      if (type === "excel") {
+        generateUsersExcelReport(data.users);
+      } else {
+        generateUsersPdfReport(data.users);
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+    } finally {
+      setIsExporting(null);
     }
-  } catch (error) {
-    console.error("Export failed:", error);
-  } finally {
-    setIsExporting(null);
-  }
-};
+  };
 
   const users = data?.users ?? [];
   const totalUsers = data?.totalUsers ?? 0;
@@ -406,11 +406,17 @@ export default function AdminUsers() {
             </thead>
             <tbody className="divide-y">
               {[...users]
-                .sort(
-                  (a, b) =>
-                    (roleOrder[a.role as UserRole] ?? 99) -
-                    (roleOrder[b.role as UserRole] ?? 99),
-                )
+                .sort((a, b) => {
+                  const roleOrderA = roleOrder[a.role as UserRole] ?? 99;
+                  const roleOrderB = roleOrder[b.role as UserRole] ?? 99;
+                  if (roleOrderA !== roleOrderB) {
+                    return roleOrderA - roleOrderB;
+                  }
+                  return (
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                  );
+                })
                 .map((user) => {
                   const canModify =
                     currentUserRole &&

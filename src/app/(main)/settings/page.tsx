@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield } from "lucide-react";
+import { HelpCircle, Shield } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -20,6 +20,24 @@ export default function SettingsPage() {
               </h2>
               <p className="text-muted-foreground mt-1">
                 Update your account security credentials
+              </p>
+            </div>
+          </div>
+        </Link>
+        <Link
+          href="/settings/support"
+          className="group p-6 rounded-xl border bg-card hover:bg-accent/30 transition-all hover:shadow-lg"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-full bg-primary/10 text-primary">
+              <HelpCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold group-hover:text-primary transition-colors">
+                Customer Support
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Get help with your account or report issues
               </p>
             </div>
           </div>

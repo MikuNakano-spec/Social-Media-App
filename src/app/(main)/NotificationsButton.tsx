@@ -6,6 +6,7 @@ import { NotificationCountInfo } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 interface NotificationsButtonProps {
   initialState: NotificationCountInfo;
@@ -24,6 +25,10 @@ export default function NotificationsButton({
     refetchInterval: 35 * 1000,
   });
 
+  const { t, mounted } = useI18n();
+
+  if (!mounted) return null;
+
   return (
     <Button
       variant="ghost"
@@ -40,7 +45,7 @@ export default function NotificationsButton({
             </span>
           )}
         </div>
-        <span className="hidden lg:inline">Notifications</span>
+        <span className="hidden lg:inline">{t.notification}</span>
       </Link>
     </Button>
   );

@@ -31,6 +31,7 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import Resizer from "react-image-file-resizer";
 import { useUpdateProfileMutation } from "./mutations";
+import { useI18n } from "@/lib/i18n";
 
 interface EditProfileDialogProps {
   user: UserData;
@@ -43,6 +44,7 @@ export default function EditProfileDialog({
   open,
   onOpenChange,
 }: EditProfileDialogProps) {
+
   const form = useForm<UpdateUserProfileValues>({
     resolver: zodResolver(updateUserProfileSchema),
     defaultValues: {
@@ -74,14 +76,18 @@ export default function EditProfileDialog({
     );
   }
 
+  const { t, mounted } = useI18n();
+  
+  if (!mounted) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit profile</DialogTitle>
+          <DialogTitle>{t.editprofile}</DialogTitle>
         </DialogHeader>
         <div className="space-y-1.5">
-          <Label>Avatar</Label>
+          <Label>{t.avatar}</Label>
           <AvatarInput
             src={
               croppedAvatar
@@ -98,7 +104,7 @@ export default function EditProfileDialog({
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Display name</FormLabel>
+                  <FormLabel>{t.displayname}</FormLabel>
                   <FormControl>
                     <Input placeholder="Your display name" {...field} />
                   </FormControl>
@@ -111,7 +117,7 @@ export default function EditProfileDialog({
               name="bio"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bio</FormLabel>
+                  <FormLabel>{t.bio}</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Tell us a little bit about yourself"
@@ -125,7 +131,7 @@ export default function EditProfileDialog({
             />
             <DialogFooter>
               <LoadingButton type="submit" loading={mutation.isPending}>
-                Save
+                {t.save}
               </LoadingButton>
             </DialogFooter>
           </form>

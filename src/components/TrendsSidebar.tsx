@@ -9,6 +9,7 @@ import { Suspense } from "react";
 import FollowButton from "./FollowButton";
 import UserAvatar from "./UserAvatar";
 import UserTooltip from "./UserTooltip";
+import { getServerTranslation } from "@/lib/i18n/getServerTranslation";
 
 export default function TrendsSidebar() {
   return (
@@ -22,30 +23,51 @@ export default function TrendsSidebar() {
 }
 
 async function WhoToFollow() {
-  const { user } = await validateRequest();
+  const { user: currentUser } = await validateRequest();
 
-  if (!user) return null;
+  const t = getServerTranslation();
+
+  if (!currentUser) return null;
+
+  const currentUserFriends = await prisma.follow.findMany({
+    where: { followerId: currentUser.id },
+    select: { followingId: true }
+  });
+  const friendIds = currentUserFriends.map(f => f.followingId);
 
   const usersToFollow = await prisma.user.findMany({
     where: {
       role: "USER",
-      NOT: {
-        id: user.id,
-      },
-      followers: {
-        none: {
-          followerId: user.id,
-        },
-      },
+      NOT: { id: currentUser.id },
+      followers: { none: { followerId: currentUser.id } }
     },
-    select: getUserDataSelect(user.id),
-    take: 5,
+    select: {
+      ...getUserDataSelect(currentUser.id),
+      followers: { select: { followerId: true } }
+    },
+    take: 100
   });
+
+  const usersWithMutuals = usersToFollow.map(user => {
+    const mutualCount = user.followers.filter(f => 
+      friendIds.includes(f.followerId)
+    ).length;
+    
+    return {
+      ...user,
+      mutualCount,
+      followers: user.followers.filter(f => f.followerId === currentUser.id)
+    };
+  });
+
+  const sortedUsers = [...usersWithMutuals]
+    .sort((a, b) => b.mutualCount - a.mutualCount)
+    .slice(0, 5);
 
   return (
     <div className="space-y-5 rounded-2xl bg-card p-5 shadow-sm">
-      <div className="text-xl font-bold">Who you might know</div>
-      {usersToFollow.map((user) => (
+      <div className="text-xl font-bold">{t.whoyoumightknow}</div>
+      {sortedUsers.map((user) => (
         <div key={user.id} className="flex items-center justify-between gap-3">
           <UserTooltip user={user}>
             <Link
@@ -60,6 +82,11 @@ async function WhoToFollow() {
                 <p className="line-clamp-1 break-all text-muted-foreground">
                   @{user.username}
                 </p>
+                {user.mutualCount > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {user.mutualCount} mutual friend{user.mutualCount !== 1 ? 's' : ''}
+                  </p>
+                )}
               </div>
             </Link>
           </UserTooltip>
@@ -68,7 +95,7 @@ async function WhoToFollow() {
             initialState={{
               followers: user._count.followers,
               isFollowedByUser: user.followers.some(
-                ({ followerId }) => followerId === user.id,
+                ({ followerId }) => followerId === currentUser.id,
               ),
             }}
           />
@@ -102,9 +129,11 @@ const getTrendingTopics = unstable_cache(
 async function TrendingTopics() {
   const trendingTopics = await getTrendingTopics();
 
+  const t = getServerTranslation();
+
   return (
     <div className="space-y-5 rounded-2xl bg-card p-5 shadow-sm">
-      <div className="text-xl font-bold">Trending topics</div>
+      <div className="text-xl font-bold">{t.trendingtopic}</div>
       {trendingTopics.map(({ hashtag, count }) => {
         const title = hashtag.split("#")[1];
 

@@ -88,10 +88,16 @@ model Post {
   comments            Comment[]
   linkedNotifications Notification[]
   reports             Report[]
+  visibility Visibility @default(PUBLIC)
 
   createdAt DateTime @default(now())
 
   @@map("posts")
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
 }
 
 model Media {
@@ -206,6 +212,7 @@ enum NotificationType {
   FOLLOW
   COMMENT
   VIDEO_CALL
+  POST_CREATE
 }
 
 enum SubscriptionPlan {

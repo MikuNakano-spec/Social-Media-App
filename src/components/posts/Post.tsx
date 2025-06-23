@@ -7,7 +7,7 @@ import { Media } from "@prisma/client";
 import { Flag, MessageSquare } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Comments from "../comments/Comments";
 import Linkify from "../Linkify";
 import UserAvatar from "../UserAvatar";
@@ -17,6 +17,7 @@ import LikeButton from "./LikeButton";
 import PostMoreButton from "./PostMoreButton";
 import ReportPostButton from "./ReportPostButton";
 import ShareButton from "./SharePostButton";
+import { useI18n } from "@/lib/i18n";
 
 interface PostProps {
   post: PostData;
@@ -26,6 +27,21 @@ export default function Post({ post }: PostProps) {
   const { user } = useSession();
 
   const [showComments, setShowComments] = useState(false);
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [shouldTruncate, setShouldTruncate] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      const lineHeight = parseFloat(
+        getComputedStyle(contentRef.current).lineHeight || "24",
+      );
+      const maxLines = 5;
+      const maxHeight = lineHeight * maxLines;
+      setShouldTruncate(contentRef.current.scrollHeight > maxHeight);
+    }
+  }, [post.content]);
 
   return (
     <article className="group/post space-y-3 rounded-2xl bg-card p-5 shadow-sm">
@@ -62,8 +78,24 @@ export default function Post({ post }: PostProps) {
         )}
       </div>
       <Linkify>
-        <div className="whitespace-pre-line break-words">{post.content}</div>
+        <div
+          ref={contentRef}
+          className={cn(
+            "whitespace-pre-line break-words transition-all duration-300",
+            !isExpanded && "max-h-[7.5em] overflow-hidden",
+          )}
+        >
+          {post.content}
+        </div>
       </Linkify>
+      {shouldTruncate && (
+        <button
+          onClick={() => setIsExpanded((prev) => !prev)}
+          className="text-sm text-blue-500 hover:underline"
+        >
+          {isExpanded ? "Show less" : "Show more"}
+        </button>
+      )}
       {!!post.attachments.length && (
         <MediaPreviews attachments={post.attachments} />
       )}
@@ -83,22 +115,22 @@ export default function Post({ post }: PostProps) {
           />
         </div>
         <div className="flex items-center gap-5">
-        <BookmarkButton
-          postId={post.id}
-          initialState={{
-            isBookmarkedByUser: post.bookmarks.some(
-              (bookmark) => bookmark.userId === user.id,
-            ),
-          }}
-        />
-        <ShareButton postId={post.id} postContent={post.content} />
-        {post.user.id !== user.id && (
-            <ReportPostButton
-            post={post}
-            className="transition-colors text-muted-foreground group-hover/post:text-red-500"
+          <BookmarkButton
+            postId={post.id}
+            initialState={{
+              isBookmarkedByUser: post.bookmarks.some(
+                (bookmark) => bookmark.userId === user.id,
+              ),
+            }}
           />
-        )}
-          </div>
+          <ShareButton postId={post.id} postContent={post.content} />
+          {post.user.id !== user.id && (
+            <ReportPostButton
+              post={post}
+              className="text-muted-foreground transition-colors group-hover/post:text-red-500"
+            />
+          )}
+        </div>
       </div>
       {showComments && <Comments post={post} />}
     </article>
@@ -162,12 +194,13 @@ interface CommentButtonProps {
 }
 
 function CommentButton({ post, onClick }: CommentButtonProps) {
+  const { t } = useI18n();
   return (
     <button onClick={onClick} className="flex items-center gap-2">
       <MessageSquare className="size-5" />
       <span className="text-sm font-medium tabular-nums">
         {post._count.comments}{" "}
-        <span className="hidden sm:inline">comments</span>
+        <span className="hidden sm:inline">{t.comments}</span>
       </span>
     </button>
   );

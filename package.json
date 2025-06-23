@@ -46,8 +46,10 @@
     "lucia-auth": "^1.8.0",
     "lucide-react": "^0.402.0",
     "next": "15.0.0-rc.0",
+    "next-intl": "^4.1.0",
     "next-share": "^0.27.0",
     "next-themes": "^0.3.0",
+    "nodemailer": "^7.0.3",
     "ollama": "^0.5.15",
     "ollama-js-client": "^1.0.2",
     "openai": "^4.77.0",
@@ -75,6 +77,7 @@
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
     "@types/node": "^20",
+    "@types/nodemailer": "^6.4.17",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",

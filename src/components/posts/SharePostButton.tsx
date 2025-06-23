@@ -8,6 +8,7 @@ import {
 } from "next-share";
 import { Share2 } from "lucide-react";
 import { FaFacebook, FaTwitter, FaWhatsapp } from "react-icons/fa";
+import { useI18n } from "@/lib/i18n";
 
 interface ShareButtonProps {
   postId: string;
@@ -20,6 +21,8 @@ export default function ShareButton({ postId, postContent }: ShareButtonProps) {
   const postUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/posts/${postId}`;
   const postTitle = postContent.substring(0, 50);
 
+  const { t } = useI18n();
+
   return (
     <div className="relative">
       <button
@@ -27,7 +30,7 @@ export default function ShareButton({ postId, postContent }: ShareButtonProps) {
         className="flex items-center gap-2"
       >
         <Share2 className="size-5" />
-        <span className="text-sm font-medium hidden sm:inline">Share</span>
+        <span className="text-sm font-medium hidden sm:inline">{t.share}</span>
       </button>
 
       {showShareOptions && (
