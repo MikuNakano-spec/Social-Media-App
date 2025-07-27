@@ -1,5 +1,3 @@
-This my social media project that was base on Coding in flow but i add and change alot of stuff.
-
 To start first install all the package with npm i --legacy-peer-deps
 
 and run with npm run dev
