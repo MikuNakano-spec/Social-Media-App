@@ -1,8 +1,22 @@
-To start first install all the package with npm i --legacy-peer-deps
+#  WeebVerse Social Media App
 
-and run with npm run dev
+WeebVerse is a fully functional social media app with multiple features.
 
-The ChatAI feature i was using a local AI "ollama" to run cause it a school project and i don't want to use pay AI. You can use whatever you want
+## Installation
 
-If you want to test out the project here the link: https://social-media-app-nine-rosy.vercel.app/
-(*note It a free domain soo the loading time not the greatest sorry)
+#### 1. Clone the repo
+
+#### 2. Setup the project
+
+* Run the following command to install all the package:
+```
+npm i --legacy-peer-deps
+```
+
+* In the .env file should have all the stuff that i use
+
+# Note
+  - The ChatAI feature was using a local AI (ollama) you can change it and use whatever you want since this a school project so i don't want to spent any money on it.
+# Project Domain if you want to try it out
+https://social-media-app-nine-rosy.vercel.app/
+(It a free domain soo it def slow sorry about that)
